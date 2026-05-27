@@ -11,19 +11,43 @@ function detectPlatform(url) {
   return found ? found.key : 'generic';
 }
 
+function sendResponse(res, statusCode, { success, data = null, error = null, meta = {} }) {
+  return res.status(statusCode).json({
+    success,
+    data,
+    error,
+    meta: {
+      ...meta,
+      timestamp: new Date().toISOString(),
+    },
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
+    return sendResponse(res, 405, {
+      success: false,
+      error: { code: 'METHOD_NOT_ALLOWED', message: 'Method not allowed' },
+      meta: { endpoint: '/api/download' },
+    });
   }
 
   const { url } = req.body || {};
   if (!url || !/^https?:\/\//i.test(url)) {
-    return res.status(400).json({ success: false, message: 'URL tidak valid' });
+    return sendResponse(res, 422, {
+      success: false,
+      error: { code: 'INVALID_INPUT', message: 'URL tidak valid' },
+      meta: { endpoint: '/api/download', field: 'url' },
+    });
   }
 
   const platform = detectPlatform(url);
   if (platform === 'generic') {
-    return res.status(400).json({ success: false, message: 'Platform tidak didukung saat ini' });
+    return sendResponse(res, 422, {
+      success: false,
+      error: { code: 'UNSUPPORTED_PLATFORM', message: 'Platform tidak didukung saat ini' },
+      meta: { endpoint: '/api/download', field: 'url' },
+    });
   }
 
   const payload = {
@@ -34,8 +58,13 @@ export default async function handler(req, res) {
     platform: platform.toUpperCase(),
     type: 'MP4',
     videoUrl: url,
-    audioUrl: url
+    audioUrl: url,
   };
 
-  return res.status(200).json({ success: true, data: payload });
+  return sendResponse(res, 200, {
+    success: true,
+    data: payload,
+    error: null,
+    meta: { endpoint: '/api/download' },
+  });
 }
