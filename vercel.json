@@ -1,10 +1,13 @@
 {
   "version": 2,
   "cleanUrls": true,
-  "rewrites": [
-    { "source": "/", "destination": "/index.html" },
-    { "source": "/manifest.webmanifest", "destination": "/public/manifest.webmanifest" },
-    { "source": "/sw.js", "destination": "/public/sw.js" },
-    { "source": "/icons/(.*)", "destination": "/public/icons/$1" }
+  "routes": [
+    { "src": "^/api/(.*)$", "dest": "/api/$1" },
+    { "src": "^/js/(.*)$", "dest": "/js/$1" },
+    { "src": "^/icons/(.*)$", "dest": "/public/icons/$1" },
+    { "src": "^/manifest\\.webmanifest$", "dest": "/public/manifest.webmanifest" },
+    { "src": "^/sw\\.js$", "dest": "/public/sw.js" },
+    { "src": "^/$", "dest": "/index.html" },
+    { "src": "^(.*)$", "dest": "/index.html" }
   ]
 }
