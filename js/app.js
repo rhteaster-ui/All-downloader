@@ -108,7 +108,7 @@ window.handleDownload = async function handleDownload(e) {
       body: JSON.stringify({ url })
     });
     const data = await res.json();
-    if (!res.ok || !data.success) throw new Error(data.message || 'Gagal memproses');
+    if (!res.ok || !data.success) throw new Error(data.error?.message || data.message || 'Gagal memproses');
     showResult(data.data);
     pushToast('Ekstraksi sukses');
   } catch (err) {
