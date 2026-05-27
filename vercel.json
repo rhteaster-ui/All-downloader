@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/manifest.webmanifest", "destination": "/public/manifest.webmanifest" },
+    { "source": "/sw.js", "destination": "/public/sw.js" },
+    { "source": "/icons/(.*)", "destination": "/public/icons/$1" }
+  ]
+}

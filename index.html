@@ -109,6 +109,12 @@
         .custom-scroll::-webkit-scrollbar-thumb { background: #333; border: 1px solid #1a1a1a; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background: #CCFF00; }
     </style>
+
+    <meta name="theme-color" content="#0d0d0d">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/icons/icon.svg">
+    <link rel="apple-touch-icon" href="/icons/icon.svg">
+
 </head>
 <body class="antialiased min-h-screen flex flex-col items-center selection:bg-volt selection:text-black relative">
 
@@ -363,110 +369,7 @@
         </div>
     </div>
 
-    <script>
-        const form = document.getElementById('downloadForm');
-        const input = document.getElementById('urlInput');
-        const submitBtn = document.getElementById('submitBtn');
-        const btnText = document.getElementById('btnText');
-        const btnIcon = document.getElementById('btnIcon');
-        const btnLoader = document.getElementById('btnLoader');
-        const errorMessage = document.getElementById('errorMessage');
-        
-        const featuresGrid = document.getElementById('featuresGrid');
-        const supportTicker = document.getElementById('supportTicker');
-        const resultContainer = document.getElementById('resultContainer');
-        const aboutModal = document.getElementById('aboutModal');
+    <script src="/js/app.js"></script>
 
-        // Modal Logic
-        function toggleAboutModal() {
-            if (aboutModal.classList.contains('hidden')) {
-                aboutModal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden'; // Kunci scroll background
-            } else {
-                aboutModal.classList.add('hidden');
-                document.body.style.overflow = 'auto'; // Kembalikan scroll
-            }
-        }
-
-        // Close modal jika area di luar kotak diklik
-        aboutModal.addEventListener('click', function(e) {
-            if (e.target === aboutModal) {
-                toggleAboutModal();
-            }
-        });
-
-        async function pasteFromClipboard() {
-            try {
-                const text = await navigator.clipboard.readText();
-                input.value = text;
-                input.focus();
-            } catch (err) {
-                console.error('Failed to read clipboard.', err);
-            }
-        }
-
-        function setLoadingState(isLoading) {
-            if (isLoading) {
-                input.disabled = true;
-                submitBtn.disabled = true;
-                btnText.classList.add('hidden');
-                btnIcon.classList.add('hidden');
-                btnLoader.classList.remove('hidden');
-                errorMessage.classList.add('hidden');
-                
-                featuresGrid.classList.add('opacity-0');
-                supportTicker.classList.add('opacity-0');
-                setTimeout(() => { 
-                    featuresGrid.classList.add('hidden'); 
-                    supportTicker.classList.add('hidden');
-                }, 300);
-            } else {
-                input.disabled = false;
-                submitBtn.disabled = false;
-                btnText.classList.remove('hidden');
-                btnIcon.classList.remove('hidden');
-                btnLoader.classList.add('hidden');
-            }
-        }
-
-        function showResult() {
-            resultContainer.classList.remove('hidden');
-        }
-
-        function resetUI() {
-            input.value = '';
-            
-            resultContainer.classList.add('hidden');
-            
-            featuresGrid.classList.remove('hidden');
-            supportTicker.classList.remove('hidden');
-            setTimeout(() => {
-                featuresGrid.classList.remove('opacity-0');
-                supportTicker.classList.remove('opacity-0');
-            }, 50);
-            
-            input.focus();
-        }
-
-        async function handleDownload(e) {
-            e.preventDefault();
-            const url = input.value.trim();
-
-            if (!url || !/^https?:\/\//i.test(url)) {
-                errorMessage.classList.remove('hidden');
-                return;
-            }
-
-            setLoadingState(true);
-
-            // =========================================================
-            // TEMPAT INTEGRASI BACKEND aio-downloader.js 
-            // =========================================================
-            setTimeout(() => {
-                setLoadingState(false);
-                showResult();
-            }, 1200);
-        }
-    </script>
 </body>
 </html>
