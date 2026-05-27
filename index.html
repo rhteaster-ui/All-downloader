@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexDown - Universal Downloader</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Space Grotesk"', 'sans-serif'],
+                    },
+                    colors: {
+                        bgMain: '#0d0d0d',
+                        bgCard: '#1a1a1a',
+                        volt: '#CCFF00', /* Acid Green - Aksen utama yang sangat kontras dan modern */
+                        borderMain: '#333333',
+                    },
+                    boxShadow: {
+                        'brutal': '4px 4px 0px 0px #CCFF00',
+                        'brutal-hover': '6px 6px 0px 0px #CCFF00',
+                        'brutal-white': '4px 4px 0px 0px #ffffff',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: #ffffff;
+            background-image: radial-gradient(#333 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        /* Brutalist Interactive Elements */
+        .btn-brutal {
+            transition: all 0.15s ease-out;
+        }
+        .btn-brutal:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px 0px #CCFF00;
+        }
+        .btn-brutal:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px 0px #CCFF00;
+        }
+
+        .card-brutal {
+            transition: all 0.2s ease-out;
+        }
+        .card-brutal:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0px 0px #ffffff;
+            border-color: #ffffff;
+        }
+
+        /* Marquee / Ticker animation for supported platforms */
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            box-sizing: border-box;
+            background: #CCFF00;
+            color: #000;
+            border-top: 2px solid #333;
+            border-bottom: 2px solid #333;
+        }
+        .ticker {
+            display: inline-block;
+            white-space: nowrap;
+            padding: 8px 0;
+            animation: ticker 20s linear infinite;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
+        }
+        @keyframes ticker {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-50%, 0, 0); }
+        }
+
+        /* Spinner */
+        .loader-square {
+            width: 20px;
+            height: 20px;
+            background-color: #000;
+            animation: flip 1.2s infinite ease-in-out;
+        }
+        @keyframes flip {
+            0% { transform: perspective(120px) rotateX(0deg) rotateY(0deg); }
+            50% { transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg); background-color: #CCFF00;}
+            100% { transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg); }
+        }
+
+        /* Custom Scrollbar for Modal */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #1a1a1a; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border: 1px solid #1a1a1a; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #CCFF00; }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col items-center selection:bg-volt selection:text-black relative">
+
+    <nav class="w-full border-b-2 border-borderMain bg-bgMain/90 backdrop-blur-sm fixed top-0 z-50">
+        <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-volt flex items-center justify-center border-2 border-white">
+                    <i class="ph-bold ph-download-simple text-black text-lg"></i>
+                </div>
+                <span class="font-bold text-xl tracking-tight uppercase">NexDown</span>
+            </div>
+            <div class="hidden md:flex gap-8 font-semibold text-sm">
+                <a href="#" class="hover:text-volt transition-colors">Engine</a>
+                <a href="#" class="hover:text-volt transition-colors">API Docs</a>
+            </div>
+            <button onclick="toggleAboutModal()" class="border-2 border-borderMain bg-bgCard hover:border-volt hover:text-volt px-4 py-1.5 font-bold text-sm uppercase transition-colors flex items-center gap-2 shadow-[2px_2px_0px_0px_#333333] hover:shadow-[2px_2px_0px_0px_#CCFF00] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
+                <i class="ph-bold ph-user-circle text-lg"></i> Info Dev
+            </button>
+        </div>
+    </nav>
+
+    <main class="flex-grow flex flex-col w-full max-w-5xl mx-auto px-4 pt-32 pb-20 relative z-10">
+        
+        <div class="text-center mb-10 max-w-3xl mx-auto">
+            <div class="inline-block border-2 border-volt text-volt font-bold text-xs uppercase px-3 py-1 mb-6 shadow-brutal bg-bgMain">
+                AIO Downloader v2.0
+            </div>
+            <h1 class="text-5xl md:text-7xl font-bold mb-6 uppercase tracking-tight leading-none">
+                Extract <span class="text-volt">Media.</span><br>
+                Raw & Fast.
+            </h1>
+            <p class="text-gray-400 font-medium text-lg max-w-xl mx-auto">
+                Sistem unduh universal tanpa watermark. Masukkan tautan dan dapatkan file aslinya.
+            </p>
+        </div>
+
+        <div class="w-full max-w-3xl mx-auto mb-10 relative z-20">
+            <form id="downloadForm" onsubmit="handleDownload(event)" class="w-full relative">
+                <div class="flex flex-col md:flex-row gap-4 w-full">
+                    
+                    <div class="relative flex-grow flex items-center bg-bgCard border-2 border-white focus-within:border-volt focus-within:shadow-brutal transition-all duration-200">
+                        <button type="button" onclick="pasteFromClipboard()" class="absolute left-0 h-full px-4 text-gray-400 hover:text-volt transition-colors border-r-2 border-transparent hover:border-borderMain flex items-center justify-center bg-bgMain/50" title="Paste">
+                            <i class="ph-bold ph-clipboard text-xl"></i>
+                        </button>
+                        
+                        <input 
+                            type="url" 
+                            id="urlInput"
+                            placeholder="https://vt.tiktok.com/ZSxxpjmUV/" 
+                            class="w-full bg-transparent text-white placeholder-gray-500 outline-none pl-14 pr-4 py-4 text-lg font-medium"
+                            required
+                            autocomplete="off"
+                        >
+                    </div>
+                    
+                    <button type="submit" id="submitBtn" class="btn-brutal bg-volt text-black border-2 border-white font-bold text-lg px-10 py-4 uppercase flex items-center justify-center gap-2 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="btnText">Ekstrak</span>
+                        <i class="ph-bold ph-arrow-right" id="btnIcon"></i>
+                        <div id="btnLoader" class="loader-square hidden"></div>
+                    </button>
+                </div>
+                
+                <div id="errorMessage" class="hidden mt-4 border-2 border-red-500 bg-red-500/10 text-red-500 font-bold p-3 uppercase text-sm flex items-center gap-2">
+                    <i class="ph-bold ph-warning-circle text-lg"></i> URL Tidak Valid / Gagal Memproses
+                </div>
+            </form>
+        </div>
+
+        <div id="supportTicker" class="w-full max-w-3xl mx-auto mb-16 transition-opacity duration-300">
+            <div class="ticker-wrap shadow-[4px_4px_0px_0px_#ffffff]">
+                <div class="ticker">
+                    <span class="mx-4 flex items-center gap-2 inline-flex"><i class="ph-bold ph-tiktok-logo text-lg"></i> TikTok</span> • 
+                    <span class="mx-4 flex items-center gap-2 inline-flex"><i class="ph-bold ph-instagram-logo text-lg"></i> Instagram (Reels/Post)</span> • 
+                    <span class="mx-4 flex items-center gap-2 inline-flex"><i class="ph-bold ph-facebook-logo text-lg"></i> Facebook</span> • 
+                    <span class="mx-4 flex items-center gap-2 inline-flex"><i class="ph-bold ph-x-logo text-lg"></i> Twitter/X</span> • 
+                    <span class="mx-4 flex items-center gap-2 inline-flex"><i class="ph-bold ph-youtube-logo text-lg"></i> YouTube Shorts</span> • 
+                    
+                    <span class="mx-4 flex items-center gap-2 inline-flex"><i class="ph-bold ph-tiktok-logo text-lg"></i> TikTok</span> • 
+                    <span class="mx-4 flex items-center gap-2 inline-flex"><i class="ph-bold ph-instagram-logo text-lg"></i> Instagram (Reels/Post)</span> • 
+                    <span class="mx-4 flex items-center gap-2 inline-flex"><i class="ph-bold ph-facebook-logo text-lg"></i> Facebook</span> • 
+                    <span class="mx-4 flex items-center gap-2 inline-flex"><i class="ph-bold ph-x-logo text-lg"></i> Twitter/X</span> • 
+                    <span class="mx-4 flex items-center gap-2 inline-flex"><i class="ph-bold ph-youtube-logo text-lg"></i> YouTube Shorts</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="featuresGrid" class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl mx-auto transition-opacity duration-300">
+            <div class="card-brutal bg-bgCard border-2 border-borderMain p-6 group cursor-default">
+                <div class="w-12 h-12 bg-white border-2 border-black flex items-center justify-center text-black mb-6 group-hover:bg-volt transition-colors">
+                    <i class="ph-bold ph-lightning text-2xl"></i>
+                </div>
+                <h3 class="font-bold text-xl uppercase mb-2">Fast Fetch</h3>
+                <p class="text-gray-400 text-sm font-medium">Bypass limitasi server dan ambil metadata dalam milidetik.</p>
+            </div>
+            <div class="card-brutal bg-bgCard border-2 border-borderMain p-6 group cursor-default">
+                <div class="w-12 h-12 bg-white border-2 border-black flex items-center justify-center text-black mb-6 group-hover:bg-volt transition-colors">
+                    <i class="ph-bold ph-drop-slash text-2xl"></i>
+                </div>
+                <h3 class="font-bold text-xl uppercase mb-2">No Watermark</h3>
+                <p class="text-gray-400 text-sm font-medium">Resolusi asli, langsung dari CDN server tanpa kompresi ulang.</p>
+            </div>
+            <div class="card-brutal bg-bgCard border-2 border-borderMain p-6 group cursor-default">
+                <div class="w-12 h-12 bg-white border-2 border-black flex items-center justify-center text-black mb-6 group-hover:bg-volt transition-colors">
+                    <i class="ph-bold ph-code text-2xl"></i>
+                </div>
+                <h3 class="font-bold text-xl uppercase mb-2">API Ready</h3>
+                <p class="text-gray-400 text-sm font-medium">Integrasi mudah via Axios/Fetch untuk kebutuhan development.</p>
+            </div>
+        </div>
+
+        <div id="resultContainer" class="hidden w-full max-w-3xl mx-auto mt-4">
+            
+            <div class="border-2 border-white bg-bgCard shadow-brutal-white p-1">
+                <div class="bg-white text-black font-bold text-sm uppercase px-4 py-2 flex justify-between items-center border-b-2 border-white">
+                    <span class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-green-600 text-lg"></i> Ekstraksi Sukses</span>
+                    <button onclick="resetUI()" class="hover:text-red-600 transition-colors">Tutup [X]</button>
+                </div>
+
+                <div class="p-4 md:p-6 flex flex-col md:flex-row gap-6">
+                    <div class="w-full md:w-2/5 border-2 border-borderMain bg-black relative group aspect-[4/5] md:aspect-auto">
+                        <img id="resultImage" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Thumb" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500">
+                        <div class="absolute top-2 left-2 bg-volt text-black border-2 border-black font-bold text-xs px-2 py-1 uppercase">
+                            MP4 / 1080p
+                        </div>
+                    </div>
+
+                    <div class="w-full md:w-3/5 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center gap-2 text-gray-400 text-sm font-bold uppercase mb-2">
+                                <i class="ph-bold ph-user"></i> @creator_id
+                            </div>
+                            <h2 class="text-xl font-bold uppercase leading-snug mb-4 border-l-4 border-volt pl-3">
+                                Ini adalah judul atau caption video hasil ekstraksi dari tautan.
+                            </h2>
+                            
+                            <div class="grid grid-cols-3 gap-2 mb-6">
+                                <div class="border-2 border-borderMain p-2 text-center bg-bgMain">
+                                    <i class="ph-fill ph-heart text-gray-400 mb-1"></i>
+                                    <div class="font-bold text-sm">1.2M</div>
+                                </div>
+                                <div class="border-2 border-borderMain p-2 text-center bg-bgMain">
+                                    <i class="ph-fill ph-chat-circle text-gray-400 mb-1"></i>
+                                    <div class="font-bold text-sm">45K</div>
+                                </div>
+                                <div class="border-2 border-borderMain p-2 text-center bg-bgMain">
+                                    <i class="ph-fill ph-share-network text-gray-400 mb-1"></i>
+                                    <div class="font-bold text-sm">12K</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-3">
+                            <button class="btn-brutal w-full bg-white text-black border-2 border-black font-bold uppercase py-3 flex items-center justify-center gap-2">
+                                <i class="ph-bold ph-video-camera text-xl"></i> Unduh Video (No WM)
+                            </button>
+                            <button class="btn-brutal w-full bg-bgMain text-white border-2 border-white hover:border-volt hover:text-volt font-bold uppercase py-3 flex items-center justify-center gap-2">
+                                <i class="ph-bold ph-music-notes text-xl"></i> Unduh Audio Saja
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="w-full border-t-2 border-borderMain bg-bgMain py-6 text-center text-sm font-bold uppercase tracking-wider mt-auto relative z-10">
+        <span class="text-gray-500">© 2026 NexDown - Engine by Rahmat</span>
+    </footer>
+
+    <!-- ABOUT / DEV MODAL (NEO-BRUTALISM) -->
+    <div id="aboutModal" class="hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300">
+        <div class="bg-bgCard border-2 border-white shadow-[8px_8px_0px_0px_#CCFF00] w-full max-w-lg relative flex flex-col max-h-[90vh]">
+            
+            <!-- Modal Header -->
+            <div class="bg-white text-black font-bold text-sm uppercase px-4 py-3 flex justify-between items-center border-b-2 border-white shrink-0">
+                <span class="flex items-center gap-2"><i class="ph-bold ph-info text-lg"></i> System & Dev Info</span>
+                <button onclick="toggleAboutModal()" class="hover:text-red-600 transition-colors flex items-center gap-1">TUTUP <i class="ph-bold ph-x"></i></button>
+            </div>
+            
+            <!-- Modal Scrollable Content -->
+            <div class="p-6 overflow-y-auto custom-scroll">
+                
+                <!-- Website Info Section -->
+                <div class="mb-8">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 bg-volt flex items-center justify-center border-2 border-white shrink-0 shadow-[4px_4px_0px_0px_#ffffff]">
+                            <i class="ph-bold ph-download-simple text-black text-3xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-3xl uppercase tracking-tight text-white leading-none">NexDown</h3>
+                            <div class="text-volt text-xs font-bold uppercase border border-volt px-1.5 py-0.5 inline-block mt-2">Engine v2.0</div>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 text-sm font-medium mb-5 border-l-2 border-borderMain pl-3">
+                        AIO Media Downloader super cepat tanpa watermark. Dibangun dengan fokus pada fungsionalitas dan optimalisasi untuk perangkat spesifikasi rendah.
+                    </p>
+                    
+                    <div class="text-xs font-bold uppercase text-white mb-2 tracking-widest"><i class="ph-bold ph-plugs"></i> Platform Support:</div>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="border-2 border-borderMain px-2 py-1 text-xs font-bold uppercase bg-bgMain flex items-center gap-1"><i class="ph-bold ph-tiktok-logo"></i> TikTok</span>
+                        <span class="border-2 border-borderMain px-2 py-1 text-xs font-bold uppercase bg-bgMain flex items-center gap-1"><i class="ph-bold ph-instagram-logo"></i> Instagram</span>
+                        <span class="border-2 border-borderMain px-2 py-1 text-xs font-bold uppercase bg-bgMain flex items-center gap-1"><i class="ph-bold ph-facebook-logo"></i> Facebook</span>
+                        <span class="border-2 border-borderMain px-2 py-1 text-xs font-bold uppercase bg-bgMain flex items-center gap-1"><i class="ph-bold ph-x-logo"></i> Twitter</span>
+                        <span class="border-2 border-borderMain px-2 py-1 text-xs font-bold uppercase bg-bgMain flex items-center gap-1"><i class="ph-bold ph-youtube-logo"></i> YouTube</span>
+                    </div>
+                </div>
+
+                <div class="w-full h-px bg-borderMain mb-8 relative">
+                    <div class="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-bgCard px-2 text-borderMain"><i class="ph-fill ph-asterisk"></i></div>
+                </div>
+
+                <!-- Developer Info Section -->
+                <div>
+                    <div class="text-xs font-bold uppercase text-volt mb-4 tracking-widest flex items-center gap-2">
+                        <i class="ph-bold ph-terminal-window"></i> Engineered By
+                    </div>
+                    
+                    <div class="flex items-center gap-5 mb-6">
+                        <div class="w-20 h-20 border-2 border-white shrink-0 bg-bgMain p-1 shadow-[4px_4px_0px_0px_#CCFF00]">
+                            <!-- Gambar profil sesuai request: kotak/bukan bulat -->
+                            <img src="https://raw.githubusercontent.com/rhteaster-ui/Pp-dev/refs/heads/main/pp-dev.png" alt="R_hmt ofc" class="w-full h-full object-cover filter grayscale hover:grayscale-0 transition-all duration-300">
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-2xl uppercase text-white leading-none mb-1">R_hmt ofc</h4>
+                            <p class="text-gray-400 text-xs font-medium uppercase tracking-wide">Self-Taught Web App Dev</p>
+                        </div>
+                    </div>
+
+                    <!-- Social Media Data (Exclude Github, No Emojis) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <a href="https://whatsapp.com/channel/0029VbBjyjlJ93wa6hwSWa0p" target="_blank" class="btn-brutal bg-bgMain border-2 border-borderMain hover:border-volt hover:text-volt px-3 py-2.5 text-sm font-bold uppercase flex items-center justify-between transition-colors group">
+                            <div class="flex items-center gap-2"><i class="ph-bold ph-whatsapp-logo text-lg"></i> WA Channel</div>
+                            <i class="ph-bold ph-arrow-up-right opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="https://www.instagram.com/rahmt_nhw" target="_blank" class="btn-brutal bg-bgMain border-2 border-borderMain hover:border-volt hover:text-volt px-3 py-2.5 text-sm font-bold uppercase flex items-center justify-between transition-colors group">
+                            <div class="flex items-center gap-2"><i class="ph-bold ph-instagram-logo text-lg"></i> Instagram</div>
+                            <i class="ph-bold ph-arrow-up-right opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="https://www.tiktok.com/@r_hmtofc" target="_blank" class="btn-brutal bg-bgMain border-2 border-borderMain hover:border-volt hover:text-volt px-3 py-2.5 text-sm font-bold uppercase flex items-center justify-between transition-colors group">
+                            <div class="flex items-center gap-2"><i class="ph-bold ph-tiktok-logo text-lg"></i> TikTok</div>
+                            <i class="ph-bold ph-arrow-up-right opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="https://t.me/rAi_engine" target="_blank" class="btn-brutal bg-bgMain border-2 border-borderMain hover:border-volt hover:text-volt px-3 py-2.5 text-sm font-bold uppercase flex items-center justify-between transition-colors group">
+                            <div class="flex items-center gap-2"><i class="ph-bold ph-telegram-logo text-lg"></i> Telegram</div>
+                            <i class="ph-bold ph-arrow-up-right opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('downloadForm');
+        const input = document.getElementById('urlInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnIcon = document.getElementById('btnIcon');
+        const btnLoader = document.getElementById('btnLoader');
+        const errorMessage = document.getElementById('errorMessage');
+        
+        const featuresGrid = document.getElementById('featuresGrid');
+        const supportTicker = document.getElementById('supportTicker');
+        const resultContainer = document.getElementById('resultContainer');
+        const aboutModal = document.getElementById('aboutModal');
+
+        // Modal Logic
+        function toggleAboutModal() {
+            if (aboutModal.classList.contains('hidden')) {
+                aboutModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Kunci scroll background
+            } else {
+                aboutModal.classList.add('hidden');
+                document.body.style.overflow = 'auto'; // Kembalikan scroll
+            }
+        }
+
+        // Close modal jika area di luar kotak diklik
+        aboutModal.addEventListener('click', function(e) {
+            if (e.target === aboutModal) {
+                toggleAboutModal();
+            }
+        });
+
+        async function pasteFromClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                input.value = text;
+                input.focus();
+            } catch (err) {
+                console.error('Failed to read clipboard.', err);
+            }
+        }
+
+        function setLoadingState(isLoading) {
+            if (isLoading) {
+                input.disabled = true;
+                submitBtn.disabled = true;
+                btnText.classList.add('hidden');
+                btnIcon.classList.add('hidden');
+                btnLoader.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+                
+                featuresGrid.classList.add('opacity-0');
+                supportTicker.classList.add('opacity-0');
+                setTimeout(() => { 
+                    featuresGrid.classList.add('hidden'); 
+                    supportTicker.classList.add('hidden');
+                }, 300);
+            } else {
+                input.disabled = false;
+                submitBtn.disabled = false;
+                btnText.classList.remove('hidden');
+                btnIcon.classList.remove('hidden');
+                btnLoader.classList.add('hidden');
+            }
+        }
+
+        function showResult() {
+            resultContainer.classList.remove('hidden');
+        }
+
+        function resetUI() {
+            input.value = '';
+            
+            resultContainer.classList.add('hidden');
+            
+            featuresGrid.classList.remove('hidden');
+            supportTicker.classList.remove('hidden');
+            setTimeout(() => {
+                featuresGrid.classList.remove('opacity-0');
+                supportTicker.classList.remove('opacity-0');
+            }, 50);
+            
+            input.focus();
+        }
+
+        async function handleDownload(e) {
+            e.preventDefault();
+            const url = input.value.trim();
+
+            if (!url || !/^https?:\/\//i.test(url)) {
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            setLoadingState(true);
+
+            // =========================================================
+            // TEMPAT INTEGRASI BACKEND aio-downloader.js 
+            // =========================================================
+            setTimeout(() => {
+                setLoadingState(false);
+                showResult();
+            }, 1200);
+        }
+    </script>
+</body>
+</html>
